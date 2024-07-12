@@ -19,7 +19,7 @@ app.use(express.json()); // to parese the incoming request with JSON payloads (f
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/messsages", messageRoutes);
+app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 
 app.listen(PORT, () => {
