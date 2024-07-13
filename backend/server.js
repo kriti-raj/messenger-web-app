@@ -11,12 +11,12 @@ import userRoutes from "./routes/user.routes.js"
 import connectToMongoDB from "./db/connectTOMongoDB.js";
 import { app, server } from "./socket/socket.js";
 
-
-const PORT = process.env.PORT || 3000;
+dotenv.config();
 
 const __dirname = path.resolve();
 
-dotenv.config();
+// PORT should be assigned after calling dotenv.config()
+const PORT = process.env.PORT || 3000;
 
 // MiddleWares
 app.use(express.json()); // to parese the incoming request with JSON payloads (from req.body)
