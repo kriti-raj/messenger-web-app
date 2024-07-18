@@ -1,6 +1,7 @@
-import Conversation from "../models/conversation.model.js"
+import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
+
 export const sendMessage = async (req, res) => {
     try {
         const { message } = req.body;
@@ -23,24 +24,16 @@ export const sendMessage = async (req, res) => {
             message,
         });
 
-
         if (newMessage) {
             conversation.messages.push(newMessage._id);
         }
 
-        // This will run simultaniously hence will take more time.
-        // await conversation.save();
-        // await newMessage.save();
-
-        // This will run in parallel.
-
+        // Save conversation and message in parallel
         await Promise.all([conversation.save(), newMessage.save()]);
 
-        // SOCKET IO FUNCTIONALITY WILL GO HERE.
-
+        // SOCKET IO FUNCTIONALITY WILL GO HERE
         const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverId) {
-            // io.to(<socket_id>).emit() used to send events to specific clients
+        if (receiverSocketId) {
             io.to(receiverSocketId).emit("newMessage", newMessage);
         }
 
@@ -49,23 +42,43 @@ export const sendMessage = async (req, res) => {
         console.log("Error in sendMessage controller:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 
 export const getMessages = async (req, res) => {
     try {
         const { id: userToChatId } = req.params;
         const senderId = req.user._id;
+        const client = req.app.locals.redisClient; // Get the Redis client from app locals
+
+        if (!client) {
+            console.log("Redis client is not initialized");
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        // Check if data is already cached in Redis
+        const cacheKey = `conversation:${senderId}:${userToChatId}`;
+        const cachedData = await client.get(cacheKey);
+        if (cachedData) {
+            // console.log('Data from redis');
+            return res.status(200).json(JSON.parse(cachedData)); // Parse cached data before sending response
+        }
+
         const conversation = await Conversation.findOne({
             participants: { $all: [senderId, userToChatId] },
-        }).populate("messages"); // NOT REFERENCE BUT ACTUAL MESSAGES
+        }).populate("messages");
 
         if (!conversation) return res.status(200).json([]);
 
         const messages = conversation.messages;
+
+        // Store data in Redis with an expiration time
+        await client.set(cacheKey, JSON.stringify(messages), {
+            EX: 3600 // Set key with an expiration of 1 hour
+        });
 
         res.status(200).json(messages);
     } catch (error) {
         console.log("Error in getMessages controller:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};

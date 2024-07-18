@@ -21,6 +21,7 @@
     "mongoose": "^8.1.1",
     "nodemon": "^3.0.3",
     "react-hot-toast": "^2.4.1",
+    "redis": "^4.6.15",
     "socket.io": "^4.7.4"
   }
 }
