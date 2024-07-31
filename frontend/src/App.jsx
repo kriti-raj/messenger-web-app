@@ -22,6 +22,10 @@ const App = () => {
           path="/signup"
           element={authUser ? <Navigate to="/" /> : <SignUp />}
         />
+        <Route
+          path="*"
+          element={authUser ? <Home /> : <Navigate to="/login" />}
+        />
       </Routes>
       <Toaster />
     </div>

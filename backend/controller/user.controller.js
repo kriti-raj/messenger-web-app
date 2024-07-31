@@ -23,7 +23,7 @@ export const getUsersForSidebar = async (req, res) => {
 
         // Store data in Redis with an expiration time
         await client.set(cacheKey, JSON.stringify(filteredUsers), {
-            EX: 3600 // Set key with an expiration of 1 hour
+            EX: 300 // Set key with an expiration of 1 hour
         });
 
         res.status(200).json(filteredUsers);
